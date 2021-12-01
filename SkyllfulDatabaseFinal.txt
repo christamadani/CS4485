@@ -1,0 +1,1053 @@
+DROP TABLE IF EXISTS [dbo].[EmployeeDetails]
+DROP TABLE IF EXISTS [dbo].[AggregationStatisticsItem]
+DROP TABLE IF EXISTS [dbo].[ReportItem] 
+DROP TABLE IF EXISTS [dbo].[ImportProcess]
+DROP TABLE IF EXISTS [dbo].[CalculatedUsersLesson]
+DROP TABLE IF EXISTS [dbo].[CalculatedUsersStatistic]
+DROP TABLE IF EXISTS [dbo].[VideoStatistic]
+DROP TABLE IF EXISTS [dbo].[StepStatistic]
+DROP TABLE IF EXISTS [dbo].[StepMode]
+DROP TABLE IF EXISTS [dbo].[StepTranslation]
+DROP TABLE IF EXISTS [dbo].[Step] 
+DROP TABLE IF EXISTS [dbo].[Annotation]  
+DROP TABLE IF EXISTS [dbo].[ControlValue]
+DROP TABLE IF EXISTS [dbo].[Control]
+DROP TABLE IF EXISTS [dbo].[ControlType]
+DROP TABLE IF EXISTS [dbo].[ScreenLanguagesBundles]
+DROP TABLE IF EXISTS [dbo].[BundleCustomLocalization]
+DROP TABLE IF EXISTS [dbo].[Screen]
+DROP TABLE IF EXISTS [dbo].[LessonStatistic] 
+DROP TABLE IF EXISTS [dbo].[CalculatedLessonAverageStatistics]  
+DROP TABLE IF EXISTS [dbo].[ReminderLesson]
+DROP TABLE IF EXISTS [dbo].[ReminderRecipient]
+DROP TABLE IF EXISTS [dbo].[Reminder]
+DROP TABLE IF EXISTS [dbo].[LessonTranslation]
+DROP TABLE IF EXISTS [dbo].[TrainingCampaignLesson]
+DROP TABLE IF EXISTS [dbo].[LessonModesInfoTranslation]
+DROP TABLE IF EXISTS [dbo].[LessonModesInfo] 
+DROP TABLE IF EXISTS [dbo].[Lesson] 
+DROP TABLE IF EXISTS [dbo].[UserTrainingProgram]
+DROP TABLE IF EXISTS [dbo].[JobRoleTrack]
+DROP TABLE IF EXISTS [dbo].[JobRole]
+DROP TABLE IF EXISTS [dbo].[TrainingProgramTranslation]
+DROP TABLE IF EXISTS [dbo].[ModuleTranslation]
+DROP TABLE IF EXISTS [dbo].[TrainingProgramLanguage]
+DROP TABLE IF EXISTS [dbo].[BundleGlobalLocalization] 
+DROP TABLE IF EXISTS [dbo].[Language] 
+DROP TABLE IF EXISTS [dbo].[Module]
+DROP TABLE IF EXISTS [dbo].[Track]
+DROP TABLE IF EXISTS [dbo].[BundleLoadDuration]
+DROP TABLE IF EXISTS [dbo].[Session]
+DROP TABLE IF EXISTS [dbo].[SimulatorActivity]
+DROP TABLE IF EXISTS [dbo].[Message] 
+DROP TABLE IF EXISTS [dbo].[CalculatedTrainingCampaignUserStatistics] 
+DROP TABLE IF EXISTS [dbo].[Segment]
+DROP TABLE IF EXISTS [dbo].[TrainingCampaign]
+DROP TABLE IF EXISTS [dbo].[ReadinessGroupUserLocation]
+DROP TABLE IF EXISTS [dbo].[Location]
+DROP TABLE IF EXISTS [dbo].[UserReadinessGroup]
+DROP TABLE IF EXISTS [dbo].[ReadinessGroupViewer]
+DROP TABLE IF EXISTS [dbo].[ReadinessGroup]
+DROP TABLE IF EXISTS [dbo].[ManagerUserDependentUserTrainingProgram] 
+DROP TABLE IF EXISTS [dbo].[UserActivity] 
+DROP TABLE IF EXISTS [dbo].[Report]
+DROP TABLE IF EXISTS [dbo].[UserTagTrainingProgram]
+DROP TABLE IF EXISTS [dbo].[Tag]
+DROP TABLE IF EXISTS [dbo].[Comment]
+DROP TABLE IF EXISTS [dbo].[Thread]
+DROP TABLE IF EXISTS [dbo].[UserDashboardRoleTrainingProgram]
+DROP TABLE IF EXISTS [dbo].[UserRoleTrainingProgram] 
+DROP TABLE IF EXISTS [dbo].[Role] 
+DROP TABLE IF EXISTS [dbo].[PermissionRule]
+DROP TABLE IF EXISTS [dbo].[DashboardTpBaseInfo]
+-- ALTER TABLE ImageAsset
+-- DROP CONSTRAINT FK_imageasset;
+-- ALTER TABLE TrainingProgram
+-- DROP CONSTRAINT FK_tprograms_iconid;
+DROP TABLE IF EXISTS [dbo].[ImageAsset]
+DROP TABLE IF EXISTS [dbo].[TrainingProgram]
+DROP TABLE IF EXISTS [dbo].[DashboardRole]
+DROP TABLE IF EXISTS [dbo].[UserToken]
+DROP TABLE IF EXISTS [dbo].[PushMessage]
+DROP TABLE IF EXISTS [dbo].[User]
+
+-- Creating a local variable with DECLARE/SET syntax.  
+DECLARE @myid uniqueidentifier  
+SET @myid = NEWID()  
+PRINT 'Value of @myid is: '+ CONVERT(varchar(255), @myid)  
+
+CREATE TABLE [dbo].[User]
+( 
+    [Id] uniqueidentifier DEFAULT newid() NOT NULL, -- Primary Key column
+    [Email][NVARCHAR] (50) NOT NULL, 
+    [PasswordHash][NVARCHAR](50) NOT NULL, 
+    [TemporaryPasswordHash][NVARCHAR](50) NOT NULL, 
+    [LastLoginDate] DATETIME2, 
+    [CreatedDate] DATETIME2 NOT NULL, 
+    [Status] varchar(10) CHECK (Status IN('Active', 'Pending')),
+    [IsNewUser][NVARCHAR] (50) NOT NULL, 
+    [FirstName][NVARCHAR](50) NOT NULL, 
+    [LastName] [NVARCHAR](50) NOT NULL,
+    [IsUserCmsAdmin] BIT NOT NULL,
+    [NotificationPlatformType] varchar(10) CHECK (NotificationPlatformType IN('Android', 'IOS')),
+    [HasUnseenNotification] BIT NOT NULL,
+    PRIMARY KEY ([Id])
+    
+); 
+
+CREATE TABLE [dbo].[PushMessage]
+( 
+    [Id] uniqueidentifier DEFAULT newid() NOT NULL, -- Primary Key column 
+    [Body] VARCHAR(50) NOT NULL, 
+    [UserId] uniqueidentifier DEFAULT newid() NOT NULL,  
+    [IsViewed] BIT NOT NULL,  --key for user
+    [CreatedDate] Date NOT NULL, 
+    [CreatorId] uniqueidentifier DEFAULT newid() NOT NULL
+    PRIMARY KEY ([Id]),
+    CONSTRAINT FK_pushmessage_ID FOREIGN KEY (UserId) REFERENCES [dbo].[User] (Id), --foreign key grabbed from user
+    CONSTRAINT FK_pushmessage_Cid FOREIGN KEY (CreatorId) REFERENCES [dbo].[User] (Id) --foreign key grabbed from user
+
+); 
+
+CREATE TABLE [dbo].[UserToken]
+( 
+    [Id] [NVARCHAR] (50) NOT NULL, -- Primary Key column 
+    [Token][NVARCHAR] (50) NOT NULL, 
+    [UserId] uniqueidentifier DEFAULT newid() NOT NULL,
+    PRIMARY KEY ([Id]),
+    CONSTRAINT FK_usertoken_ID FOREIGN KEY (UserId) REFERENCES [dbo].[User] (Id) --foreign key grabbed from user
+); 
+
+CREATE TABLE [dbo].[DashboardRole]
+( 
+    [Id] uniqueidentifier DEFAULT newid() NOT NULL, -- Primary Key column 
+    [Name] [NVARCHAR] (255) NOT NULL,
+    PRIMARY KEY ([Id])
+); 
+
+CREATE TABLE [dbo].[ImageAsset]
+(
+    [Id] uniqueidentifier DEFAULT newid() NOT NULL, 
+    [Name] [NVARCHAR] (50) NOT NULL, 
+    [CreatedDate] DATETIME2 NOT NULL,
+    [UpdatedDate] DATETIME2 NOT NULL,
+    [TrainingProgramId] uniqueidentifier DEFAULT newid(), 
+    [BlobName] [NVARCHAR] (50) NOT NULL, 
+    [Status] varchar(10) CHECK (Status IN('Active', 'Archived')),
+    PRIMARY KEY ([Id]),
+);
+
+CREATE TABLE [dbo].[TrainingProgram] 
+( 
+    [Id] uniqueidentifier DEFAULT newid() NOT NULL, -- Primary Key column 
+    [Name][NVARCHAR] (255) NOT NULL, 
+    [Status] varchar(10) CHECK (Status IN('Active', 'Archived')), 
+    [BundleName][NVARCHAR](50) NOT NULL, 
+    [ImageName] [NVARCHAR](50) NOT NULL, 
+    [PreferredMaxLessonSize] float(53) NOT NULL,
+    [Iconid] uniqueidentifier DEFAULT newid(), --can be null  
+    CONSTRAINT FK_tprograms_iconid FOREIGN KEY (Iconid) REFERENCES [dbo].[ImageAsset] (Id),
+    PRIMARY KEY ([Id])
+); 
+
+ALTER TABLE [dbo].[ImageAsset] --Adding the fkey to imageasset
+    ADD CONSTRAINT FK_imageasset FOREIGN KEY (TrainingProgramId)
+     REFERENCES [dbo].[TrainingProgram] (Id)
+     ON DELETE CASCADE
+     ON UPDATE CASCADE
+     ; 
+
+
+CREATE TABLE [dbo].[DashboardTpBaseInfo]
+(
+    [TrainingProgramId] uniqueidentifier DEFAULT newid() NOT NULL,
+    --IReadOnlyList<String> DashboardRoles
+);
+
+CREATE TABLE [dbo].[PermissionRule]
+(
+    [UserId] uniqueidentifier DEFAULT newid() NOT NULL,
+    [TrainingProgramId] uniqueidentifier DEFAULT newid() NOT NULL,
+    [Id] uniqueidentifier DEFAULT newid() NOT NULL,
+    [Permission] [NVARCHAR](100) NOT NULL,
+    PRIMARY KEY ([Id]),
+    CONSTRAINT FK_permissions_trainingprogramid FOREIGN KEY (TrainingProgramId) REFERENCES [dbo].[TrainingProgram] (Id),
+    CONSTRAINT FK_permissions_userid FOREIGN KEY (UserId) REFERENCES [dbo].[User] (Id),
+);
+
+CREATE TABLE [dbo].[Role]
+(
+    [Id] uniqueidentifier DEFAULT newid() NOT NULL,
+    [Name] [NVARCHAR] (255) NOT NULL,
+    PRIMARY KEY ([Id]),
+
+);
+
+CREATE TABLE [dbo].[UserRoleTrainingProgram]
+(
+    [UserId] uniqueidentifier DEFAULT newid() NOT NULL,
+    [RoleId] uniqueidentifier DEFAULT newid() NOT NULL,
+    [TrainingProgramId]  uniqueidentifier DEFAULT newid() NOT NULL,
+    [Status] varchar(10) CHECK (Status IN('Active', 'Archived')),
+    CONSTRAINT FK_ustp_trainingprogramid FOREIGN KEY (TrainingProgramId) REFERENCES [dbo].[TrainingProgram] (Id),
+    CONSTRAINT FK_ustp_roleid FOREIGN KEY (RoleId) REFERENCES [dbo].[Role] (Id),
+
+);
+
+CREATE TABLE [dbo].[UserDashboardRoleTrainingProgram]
+( 
+    [UserId] uniqueidentifier DEFAULT newid() NOT NULL,
+    [DashboardRoleId] uniqueidentifier DEFAULT newid() NOT NULL, 
+    [TrainingProgramId] uniqueidentifier DEFAULT newid() NOT NULL,  
+    PRIMARY KEY ([Userid], [DashboardRoleId], [TrainingProgramId]),
+    CONSTRAINT FK_userDashRoleTrainingPrograms_ID FOREIGN KEY (UserId) REFERENCES [dbo].[User] (Id), --foreign key grabbed from user
+    CONSTRAINT FK_userDashRoleTrainingPrograms_RoleID FOREIGN KEY (DashboardRoleId) REFERENCES [dbo].[DashboardRole] (Id), --foreign key grabbed from dash
+    CONSTRAINT FK_userDashRoleTrainingPrograms_TrainID FOREIGN KEY (TrainingProgramId) REFERENCES [dbo].[TrainingProgram] (Id) --foreign key grabbed from train
+); 
+
+CREATE TABLE [dbo].[Thread]
+(
+    [Id] uniqueidentifier DEFAULT newid() NOT NULL,
+    [ReferenceEntityType] varchar(10) NOT NULL CHECK (ReferenceEntityType IN('Module', 'Lesson', 'Track', 'ReadinessGroup', 'TrainingCampaign', 'User', 'JobRole', 'Screen', 'TrainingProgram', 'Step')),
+    [ReferenceEntityId] uniqueidentifier DEFAULT newid() NOT NULL,
+    [IsComplete] BIT NOT NULL,
+    [TrainingProgramId] uniqueidentifier DEFAULT newid() NOT NULL,  --getting from training programs
+    CONSTRAINT FK_thread_trainid FOREIGN KEY (TrainingProgramId) REFERENCES [dbo].[TrainingProgram] (Id), --foreign key grabbed from dash
+    PRIMARY KEY ([Id])
+);
+
+CREATE TABLE [dbo].[Comment]
+(
+    [Id] uniqueidentifier DEFAULT newid() NOT NULL,
+    [ThreadId] uniqueidentifier DEFAULT newid() NOT NULL,
+    [AuthorId] uniqueidentifier DEFAULT newid() NOT NULL,
+    [DateTimeSent]  Date NOT NULL, 
+    [Body] [NVARCHAR] (255) NOT NULL,
+    [ReadBy] [NVARCHAR] (255) NOT NULL,
+    PRIMARY KEY ([Id]), 
+    CONSTRAINT FK_comments_threadid FOREIGN KEY (ThreadId) REFERENCES [dbo].[Thread] (Id), --foreign key grabbed from dash
+    CONSTRAINT FK_comments_authorid FOREIGN KEY (AuthorId) REFERENCES [dbo].[User] (Id) --foreign key grabbed from dash
+);
+
+CREATE TABLE [dbo].[Tag]
+(
+    [Id] uniqueidentifier DEFAULT newid() NOT NULL,
+    [Name] [NVARCHAR] (255) NOT NULL,
+    [Value] [NVARCHAR] (255) NOT NULL,
+    [ParentId] uniqueidentifier DEFAULT newid(),
+    PRIMARY KEY ([Id])
+);
+
+CREATE TABLE [dbo].[UserTagTrainingProgram]
+(
+    [TagId] uniqueidentifier DEFAULT newid() NOT NULL,
+    [UserId] uniqueidentifier DEFAULT newid() NOT NULL,
+    [TrainingProgramId] uniqueidentifier DEFAULT newid() NOT NULL,
+    PRIMARY KEY ([Userid], [TagId], [TrainingProgramId]),
+    CONSTRAINT FK_tags_ID FOREIGN KEY (UserId) REFERENCES [dbo].[User] (Id), --foreign key grabbed from user
+    CONSTRAINT FK_tags_TagID FOREIGN KEY (TagId) REFERENCES [dbo].[Tag] (Id), --foreign key grabbed from dash
+    CONSTRAINT FK_usertagss_TrainID FOREIGN KEY (TrainingProgramId) REFERENCES [dbo].[TrainingProgram] (Id) --foreign key grabbed from train
+
+);
+
+CREATE TABLE [dbo].[Report]
+( 
+    [Id] uniqueidentifier DEFAULT newid() NOT NULL, -- Primary Key column, fkey 
+    [TrainingProgramId] uniqueidentifier DEFAULT newid() NOT NULL, --fkey 
+    [CreatedDate] DATETIME2 NOT NULL, 
+    [Url] [NVARCHAR] (255) NOT NULL,
+    PRIMARY KEY ([Id]),
+    CONSTRAINT FK_reports_TrainID FOREIGN KEY (TrainingProgramId) REFERENCES [dbo].[TrainingProgram] (Id) --foreign key grabbed from train
+
+); 
+
+CREATE TABLE [dbo].[UserActivity]
+(
+    [Id] uniqueidentifier DEFAULT newid() NOT NULL,
+    [ActivityType]  varchar(10) NOT NULL CHECK (ActivityType IN('View', 'Edit', 'Delete', 'Create')),
+    [EntityType] varchar(10) NOT NULL CHECK (EntityType IN('Module', 'Lesson', 'Track', 'ReadinessGroup', 'TrainingCampaign', 'User', 'JobRole', 'Screen', 'TrainingProgram', 'Step')),
+    [Timestamp] DATETIME2 NOT NULL,
+    [EntityId] uniqueidentifier DEFAULT newid() NOT NULL,
+    [UserId] uniqueidentifier DEFAULT newid() NOT NULL,
+    [TrainingProgramId] uniqueidentifier DEFAULT newid() NOT NULL,
+    PRIMARY KEY ([Id]),
+    CONSTRAINT FK_userac_TrainID FOREIGN KEY (TrainingProgramId) REFERENCES [dbo].[TrainingProgram] (Id), --foreign key grabbed from train
+    CONSTRAINT FK_userac_userID FOREIGN KEY (UserId) REFERENCES [dbo].[User] (Id) --foreign key grabbed from user
+);
+
+CREATE TABLE [dbo].[ManagerUserDependentUserTrainingProgram]
+(
+    [ManagerUserId] uniqueidentifier DEFAULT newid() NOT NULL,
+    [DependentUserId] uniqueidentifier DEFAULT newid() NOT NULL,
+    [TrainingProgramId] uniqueidentifier DEFAULT newid() NOT NULL,
+    PRIMARY KEY ([ManagerUserId], [DependentUserId], [TrainingProgramId]),
+    CONSTRAINT FK_mudu_trainingprogramid FOREIGN KEY (TrainingProgramId) REFERENCES [dbo].[TrainingProgram] (Id),
+    CONSTRAINT FK_mudu_managerid FOREIGN KEY (ManagerUserId) REFERENCES [dbo].[User] (Id),
+    CONSTRAINT FK_mudu_dependetid FOREIGN KEY (DependentUserId) REFERENCES [dbo].[User] (Id)
+
+);
+
+CREATE TABLE [dbo].[ReadinessGroup]
+(
+    [Id] uniqueidentifier DEFAULT newid() NOT NULL,
+    [Name] [NVARCHAR](255) NOT NULL,
+    [TrainingProgramId] uniqueidentifier DEFAULT newid() NOT NULL,
+    [GoLiveDate] DATETIME2,
+    [PercentForReadiness] INT,
+    [Status] varchar(10) NOT NULL CHECK (Status IN('Active', 'Archived')),
+    PRIMARY KEY ([Id]),
+    CONSTRAINT FK_readinessGroups_TrainingProgramID FOREIGN KEY (TrainingProgramId) REFERENCES [dbo].[TrainingProgram] (Id) --foreign key grabbed from trainingprogram
+);
+
+CREATE TABLE [dbo].[ReadinessGroupViewer]
+(
+    [UserId] uniqueidentifier DEFAULT newid() NOT NULL,
+    [ReadinessGroupId] uniqueidentifier DEFAULT newid() NOT NULL,
+    PRIMARY KEY ([Userid], [ReadinessGroupId]),
+    CONSTRAINT FK_readgroupview_ID FOREIGN KEY (UserId) REFERENCES [dbo].[User] (Id), --foreign key grabbed from user
+    CONSTRAINT FK_readgroupview_RID FOREIGN KEY (ReadinessGroupId) REFERENCES [dbo].[ReadinessGroup] (Id) --foreign key grabbed from ReadinessGroups
+);
+
+CREATE TABLE [dbo].[UserReadinessGroup]
+(
+    [UserId] uniqueidentifier DEFAULT newid() NOT NULL,
+    [ReadinessGroupId] uniqueidentifier DEFAULT newid() NOT NULL,
+    PRIMARY KEY ([Userid], [ReadinessGroupId]),
+    CONSTRAINT FK_UserReadinessGroup_ID FOREIGN KEY (UserId) REFERENCES [dbo].[User] (Id), --foreign key grabbed from user
+    CONSTRAINT FK_UserReadinessGroup_RID FOREIGN KEY (ReadinessGroupId) REFERENCES [dbo].[ReadinessGroup] (Id) --foreign key grabbed from ReadinessGroups
+);
+
+CREATE TABLE [dbo].[Location]
+( 
+    [Id] uniqueidentifier DEFAULT newid() NOT NULL, -- Primary Key column 
+    [Name][NVARCHAR] (255) NOT NULL,  
+    [Address] VARCHAR(255) NOT NULL, 
+    PRIMARY KEY ([Id])
+); 
+
+CREATE TABLE [dbo].[ReadinessGroupUserLocation]
+( 
+    [Id] uniqueidentifier DEFAULT newid() NOT NULL, -- Primary Key column 
+    [ReadinessGroupId] uniqueidentifier DEFAULT newid() NOT NULL,
+    [UserId] uniqueidentifier DEFAULT newid() NOT NULL,  
+    [LocationId] uniqueidentifier DEFAULT newid() NOT NULL,
+    PRIMARY KEY ([Id]),
+    CONSTRAINT FK_readinessGroupUsersLocations_ReadinessId FOREIGN KEY (ReadinessGroupId) REFERENCES [dbo].[ReadinessGroup] (Id), --foreign key grabbed from readinessgroupid
+    CONSTRAINT FK_readinessGroupUsersLocations_UserId FOREIGN KEY (UserId) REFERENCES [dbo].[User] (Id), --foreign key grabbed from readinessgroupid
+    CONSTRAINT FK_readinessGroupUsersLocations_LocationId FOREIGN KEY (LocationId) REFERENCES [dbo].[Location] (Id) --foreign key grabbed from readinessgroupid
+); 
+
+CREATE TABLE [dbo].[TrainingCampaign]
+(
+    [Id] uniqueidentifier DEFAULT newid() NOT NULL,
+    [ReadinessGroupId] uniqueidentifier DEFAULT newid() NOT NULL,
+    [Name] [NVARCHAR] (255) NOT NULL,  
+    [StartDate] DATETIME2,
+    [EndDate] DATETIME2,
+    [Status] varchar(10) NOT NULL CHECK (Status IN('Active', 'Archived')),
+    [SecondLineBehindLearnerLessonsPercent] INT,
+    [FirstLineBehindLearnerLessonsPercent] INT,
+    [SecondLineBrickWallLesson] INT,
+    [FirstLineBrickWallLesson] INT,
+    [SecondLineDaysBetweenLogin] INT,
+    [FirstLineDaysBetweenLogin] INT,
+    [ExpectedDaysBetweenLogin] INT NOT NULL,
+    [FirstLineCurrentCampaign] INT,
+    [SecondLineCurrentCampaign] INT,
+    [FirstLineLowPassRatePercent] INT,
+    [SecondLineLowPassRatePercent] INT,
+    [FirstLineUnresponsive] INT,
+    [SecondLineUnresponsive] INT,
+    [FirstLineFailRateKnowledgeCheckPercent] INT,
+    [SecondLineFailRateKnowledgeCheckPercent] INT,
+    [FirstLineFastForwardedVideoPercent] INT,
+    [SecondLineFastForwardedVideoPercent] INT,
+    [IsFastForwardedVideoPercent] INT,
+    [FirstLineIncorrectPracticeActionsPercent] INT,
+    [SecondLineIncorrectPracticeActionsPercent] INT,
+    [IncorrectPracticeActionsPercent] INT,
+    [FirstLineWalkthroughSpeedThroughPercent] INT,
+    [SecondLineWalkthroughSpeedThroughPercent] INT,
+    [WalkthroughSpeedThroughPercent] INT,
+    [DashboardType] varchar(10) NOT NULL CHECK (DashboardType IN('TimeBased', 'Refresher')),
+    PRIMARY KEY ([Id])
+
+);
+
+CREATE TABLE [dbo].[Segment]
+( 
+    [Id] uniqueidentifier DEFAULT newid() NOT NULL, -- Primary Key column 
+    [UserId] uniqueidentifier DEFAULT newid() NOT NULL,
+    [Region] [NVARCHAR](50) NOT NULL,    
+    [Market] [NVARCHAR] (50) NOT NULL,   
+    [Warehouse] [NVARCHAR] (50) NOT NULL, 
+    [JobRoleId] uniqueidentifier DEFAULT newid(), 
+    [ManagerId] uniqueidentifier DEFAULT newid(), 
+    [TrainingCampaignId]  uniqueidentifier DEFAULT newid() NOT NULL, 
+    [IsDefault]BIT NOT NULL,
+    [Name] [NVARCHAR](50) NOT NULL, 
+    [CreatedDate] DATETIME2 NOT NULL, 
+    [UpdatedDate] DATETIME2 NOT NULL, 
+    PRIMARY KEY ([Id]), 
+    CONSTRAINT FK_segments_userid FOREIGN KEY (UserId) REFERENCES [dbo].[User] (Id),
+    CONSTRAINT FK_segments_trainingcampaignid FOREIGN KEY (TrainingCampaignId) REFERENCES [TrainingCampaign] (Id)
+
+); 
+
+CREATE TABLE [dbo].[CalculatedTrainingCampaignUserStatistics]
+(
+    [TrainingCampaignId] uniqueidentifier DEFAULT newid() NOT NULL,
+    [UserId] uniqueidentifier DEFAULT newid() NOT NULL,
+    [InactiveDay] float(53) NOT NULL,
+    [InactiveRemindersReceived] INT NOT NULL,
+    [CompletedLesson] float(53) NOT NULL,
+    [LowPassRateRemindersReceived] INT NOT NULL,
+    [OffPaceRemindersReceived] INT NOT NULL,
+    [PassRate] float(53),
+    [UnresponsiveRemindersReceived] INT NOT NULL,
+    [UnresponsiveDay] float(53) NOT NULL,
+    [CampaignDayWithOffset] DATETIME2 NOT NULL,
+    [AssignedLesson] INT NOT NULL,
+    [AllLearnersRemindersReceived] INT NOT NULL,
+    PRIMARY KEY ([Userid], [TrainingCampaignId],[CampaignDayWithOffset]),
+    CONSTRAINT FK_calctrainuserstat_UserId FOREIGN KEY (UserId) REFERENCES [dbo].[User] (Id), --foreign key grabbed from readinessgroupid
+    CONSTRAINT FK_calctrainuserstat_TrainingcampID FOREIGN KEY (TrainingCampaignId) REFERENCES [dbo].[TrainingCampaign] (Id) --foreign key grabbed from trainingcamp
+);
+
+
+CREATE TABLE [dbo].[Message]
+(
+    [Id] uniqueidentifier DEFAULT newid() NOT NULL,
+    [MessageBody] [NVARCHAR] (255) NOT NULL,
+    [MessageType] varchar(10) NOT NULL CHECK (MessageType IN('InactiveLearners', 'OffPaceLearners', 'BrickWallLessons', 'LowPassRateLearners', 'HighFailRateKnowledgeCheckLessons', 'IncorrectPracticeActionsLessons', 'FastForwardedVideoLessons', 'WalkthroughSpeedThroughLessons', 'AllLearners', 'MostActiveLearners')),
+    [UserId] uniqueidentifier DEFAULT newid() NOT NULL,
+    [TrainingProgramId] uniqueidentifier DEFAULT newid() NOT NULL,
+    PRIMARY KEY ([Id]),
+    CONSTRAINT FK_messages_TrainID FOREIGN KEY (TrainingProgramId) REFERENCES [dbo].[TrainingProgram] (Id), --foreign key grabbed from train
+    CONSTRAINT FK_messages_userID FOREIGN KEY (UserId) REFERENCES [dbo].[User] (Id) --foreign key grabbed from user
+);
+
+
+CREATE TABLE [dbo].[SimulatorActivity]
+(
+    [Id] uniqueidentifier DEFAULT newid() NOT NULL,
+    [UserId] uniqueidentifier DEFAULT newid() NOT NULL,
+    [TrainingCampaignId] uniqueidentifier DEFAULT newid() NOT NULL,
+    [TrainingProgramId] uniqueidentifier DEFAULT newid() NOT NULL,
+    [ReadinessGroupId] uniqueidentifier DEFAULT newid() NOT NULL,
+    [CreatedDate] DATETIME2 NOT NULL,
+    [ActivityDate] DATETIME2 NOT NULL,
+    PRIMARY KEY ([Id]),
+    CONSTRAINT FK_simulator_TrainID FOREIGN KEY (TrainingProgramId) REFERENCES [dbo].[TrainingProgram] (Id), --foreign key grabbed from train
+    CONSTRAINT FK_simulator_userID FOREIGN KEY (UserId) REFERENCES [dbo].[User] (Id), --foreign key grabbed from user
+    CONSTRAINT FK_simulator_TrainingcampID FOREIGN KEY (TrainingCampaignId) REFERENCES [dbo].[TrainingCampaign] (Id), --foreign key grabbed from trainingcamp
+    CONSTRAINT FK_simulator_ReadinessId FOREIGN KEY (ReadinessGroupId) REFERENCES [dbo].[ReadinessGroup] (Id) --foreign key grabbed from readinessgroupid
+
+);
+
+CREATE TABLE [dbo].[Session]
+( 
+    [Id] uniqueidentifier DEFAULT newid() NOT NULL, -- Primary Key column, fkey 
+    [UserId] uniqueidentifier DEFAULT newid() NOT NULL,
+    [LessonId] uniqueidentifier DEFAULT newid() NOT NULL,
+    [Mode] varchar(10) NOT NULL CHECK (Mode IN('KnowledgeCheck','WalkThrough', 'PracticesRun', 'Video')),
+    [ConnectionType] [NVARCHAR] (50) NOT NULL, 
+    [SentDate] DATETIME2 NOT NULL, 
+    [EndDate] DATETIME2, 
+    [CreatedDate] DATETIME2, 
+    [Latitude] float(53), 
+    [Longitude] float(53), 
+    [InternetEffectiveType] [NVARCHAR] (50) NOT NULL,
+    PRIMARY KEY ([Id])
+); 
+
+CREATE TABLE [dbo].[BundleLoadDuration]
+(
+    [Id] uniqueidentifier DEFAULT newid() NOT NULL, 
+    [SessionId] uniqueidentifier DEFAULT newid() NOT NULL, 
+    [Duration] INT NOT NULL,
+    [BundledId] uniqueidentifier DEFAULT newid() NOT NULL, 
+    PRIMARY KEY ([Id]),
+    CONSTRAINT FK_bunloaddur_sessid FOREIGN KEY (SessionId) REFERENCES [dbo].[Session] (Id) --foreign key grabbed from readinessgroupid
+
+);
+
+CREATE TABLE [dbo].[Track]
+(
+    [Id] uniqueidentifier DEFAULT newid() NOT NULL, 
+    [Name] [NVARCHAR] (255) NOT NULL, 
+    [CreatedDate] DATETIME2 NOT NULL,
+    [TrainingProgramId] uniqueidentifier DEFAULT newid() NOT NULL, 
+    [Status] varchar(10) NOT NULL CHECK (Status IN('Active', 'Archived')),
+    [UpdatedDate] DATETIME2 NOT NULL,
+    [Description] [NVARCHAR] (50) NOT NULL,
+    [IconId] uniqueidentifier DEFAULT newid(),
+    PRIMARY KEY ([Id]),
+    CONSTRAINT FK_tracks_TrainID FOREIGN KEY (TrainingProgramId) REFERENCES [dbo].[TrainingProgram] (Id), --foreign key grabbed from train
+    CONSTRAINT FK_tracks_IconID FOREIGN KEY (IconId) REFERENCES [dbo].[ImageAsset] (Id) --foreign key grabbed from train
+
+);
+
+CREATE TABLE [dbo].[Module]
+(
+    [Id] uniqueidentifier DEFAULT newid() NOT NULL, 
+    [Name] [NVARCHAR] (255) NOT NULL, 
+    [CreatedDate] DATETIME2 NOT NULL,
+    [TrackId]  uniqueidentifier DEFAULT newid() NOT NULL, --fkey
+    [Status] varchar(10) NOT NULL CHECK (Status IN('Active', 'Archived')),
+    [IconId] uniqueidentifier DEFAULT newid(), --fkey
+    [Order] INT NOT NULL,
+    [UpdatedDate] DATETIME2 NOT NULL,
+    [Description] [NVARCHAR] (50) NOT NULL,
+    PRIMARY KEY ([Id]),
+    CONSTRAINT FK_modules_IconID FOREIGN KEY (IconId) REFERENCES [dbo].[ImageAsset] (Id), --foreign key grabbed from imageassets
+    CONSTRAINT FK_modules_trackID FOREIGN KEY (TrackId) REFERENCES [dbo].[Track] (Id) --foreign key grabbed from tracks
+);
+
+CREATE TABLE [dbo].[Language]
+(
+    [Id] uniqueidentifier DEFAULT newid(),
+    [Name] [NVARCHAR](50) NOT NULL,
+    [IsoCode] [NVARCHAR](50) NOT NULL,
+    PRIMARY KEY ([Id])
+);
+
+CREATE TABLE [dbo].[BundleGlobalLocalization]
+(
+    [Id] uniqueidentifier DEFAULT newid(),
+    [Key] [NVARCHAR](255) NOT NULL,
+    [Value] [NVARCHAR](50) NOT NULL,
+    [TrainingProgramId] uniqueidentifier DEFAULT newid(),
+    [LanguageId] uniqueidentifier DEFAULT newid(),
+    PRIMARY KEY ([Id]),
+    CONSTRAINT FK_bundleglo_trainid FOREIGN KEY (TrainingProgramId) REFERENCES [dbo].[TrainingProgram] (Id), --foreign key grabbed from readinessgroupid
+    CONSTRAINT FK_bundleglo_langid FOREIGN KEY (LanguageId) REFERENCES [dbo].[Language] (Id) --foreign key grabbed from readinessgroupid
+
+);
+
+CREATE TABLE [dbo].[TrainingProgramLanguage]
+(
+    [TrainingProgramId] uniqueidentifier DEFAULT newid(),
+    [LanguageId] uniqueidentifier DEFAULT newid(),
+    PRIMARY KEY ([TrainingProgramId], [LanguageId]),
+    CONSTRAINT FK_trainlang_trainid FOREIGN KEY (TrainingProgramId) REFERENCES [dbo].[TrainingProgram] (Id), --foreign key grabbed from readinessgroupid
+    CONSTRAINT FK_trainlang_langid FOREIGN KEY (LanguageId) REFERENCES [dbo].[Language] (Id) --foreign key grabbed from readinessgroupid
+);
+
+CREATE TABLE [dbo].[ModuleTranslation]
+(
+    [ModuleId] uniqueidentifier DEFAULT newid() NOT NULL, 
+    [LanguageId] uniqueidentifier DEFAULT newid() NOT NULL, 
+    [Name] [NVARCHAR] (255) NOT NULL, 
+    [Description] [NVARCHAR] (255) NOT NULL,
+    [IconId]uniqueidentifier DEFAULT newid(),
+    PRIMARY KEY ([ModuleId], [LanguageId]),
+    CONSTRAINT FK_modulestrans_modID FOREIGN KEY (ModuleId) REFERENCES [dbo].[Module] (Id), --foreign key grabbed from imageassets
+    CONSTRAINT FK_modulestrans_langID FOREIGN KEY (LanguageId) REFERENCES [dbo].[Language] (Id), --foreign key grabbed from imageassets
+    CONSTRAINT FK_modulestrans_iconid FOREIGN KEY (IconId) REFERENCES [dbo].[Module] (Id), --foreign key grabbed from imageassets
+
+);
+
+CREATE TABLE [dbo].[TrainingProgramTranslation]
+(
+    [TrainingProgramId] uniqueidentifier DEFAULT newid() NOT NULL, 
+    [LanguageId] uniqueidentifier DEFAULT newid() NOT NULL, 
+    [Name] [NVARCHAR] (255) NOT NULL,
+    [BundleName] [NVARCHAR] (50) NOT NULL,
+    [ImageName] [NVARCHAR] (50) NOT NULL,
+    [IconId] uniqueidentifier DEFAULT newid(), 
+    PRIMARY KEY ([TrainingProgramId], [LanguageId]),
+    CONSTRAINT FK_programtrans_langID FOREIGN KEY (LanguageId) REFERENCES [dbo].[Language] (Id), --foreign key grabbed from imageassets
+    CONSTRAINT FK_programtrans_trainid FOREIGN KEY (TrainingProgramId) REFERENCES [dbo].[TrainingProgram] (Id), --foreign key grabbed from readinessgroupid
+    CONSTRAINT FK_programtrans_iconid FOREIGN KEY (IconId) REFERENCES [dbo].[ImageAsset] (Id) --foreign key grabbed from readinessgroupid
+
+);
+
+CREATE TABLE [dbo].[JobRole]
+(
+    [Id] uniqueidentifier DEFAULT newid() NOT NULL, 
+    [Name]  [NVARCHAR] (50) NOT NULL,
+    [TrainingProgramId] uniqueidentifier DEFAULT newid() NOT NULL, 
+    [Status] varchar(10) NOT NULL CHECK (Status IN('Active', 'Archived')),
+    PRIMARY KEY ([Id]), 
+    CONSTRAINT FK_jobroles_trainid FOREIGN KEY (TrainingProgramId) REFERENCES [dbo].[TrainingProgram] (Id) --foreign key grabbed from readinessgroupid
+
+);
+
+CREATE TABLE [dbo].[JobRoleTrack]
+(
+    [JobRoleId] uniqueidentifier DEFAULT newid() NOT NULL,
+    [TrackId] uniqueidentifier DEFAULT newid() NOT NULL,
+    PRIMARY KEY ([JobRoleId], [TrackId]), 
+    CONSTRAINT FK_jobroletracks_trackID FOREIGN KEY (TrackId) REFERENCES [dbo].[Track] (Id), --foreign key grabbed from tracks
+    CONSTRAINT FK_jobroletracks_jobroleID FOREIGN KEY (JobRoleId) REFERENCES [dbo].[JobRole] (Id)--foreign key grabbed from tracks
+
+);
+
+CREATE TABLE [dbo].[UserTrainingProgram]
+(
+    [UserId] uniqueidentifier DEFAULT newid() NOT NULL,
+    [TrainingProgramId] uniqueidentifier DEFAULT newid() NOT NULL,
+    [ExternalId] BIGINT,
+    [JobRoleId] uniqueidentifier DEFAULT newid(),
+    PRIMARY KEY ([UserId], [TrainingProgramId]),
+    CONSTRAINT FK_usertrainprogram_userID FOREIGN KEY (UserId) REFERENCES [dbo].[User] (Id), --foreign key grabbed from user
+    CONSTRAINT FK_usertrainprogram_trainid FOREIGN KEY (TrainingProgramId) REFERENCES [dbo].[TrainingProgram] (Id), --foreign key grabbed from readinessgroupid
+    CONSTRAINT FK_usertrainprogram_jobroleID FOREIGN KEY (JobRoleId) REFERENCES [dbo].[JobRole] (Id) --foreign key grabbed from jobroluid
+);
+
+CREATE TABLE [dbo].[Lesson]
+(
+    [Id] uniqueidentifier DEFAULT newid() NOT NULL,
+    [ModuleId]  uniqueidentifier DEFAULT newid() NOT NULL,--fky
+    [Name] [NVARCHAR] (255) NOT NULL,
+    [Status] varchar(10) NOT NULL CHECK (Status IN('Active', 'Archived', 'Published', 'Unpublished', 'Approved')),
+    [CreatedDate] DATETIME2 NOT NULL,
+    [Description] [NVARCHAR] (255) NOT NULL,
+    [PublishedDate] DATETIME2,
+    [Order] INT NOT NULL,
+    [ImageName] [NVARCHAR] (50),
+    [IconId]  uniqueidentifier DEFAULT newid(),
+    [CreatorId] uniqueidentifier DEFAULT newid(),--fky
+    [UpdatedDate] DATETIME2 NOT NULL,
+    PRIMARY KEY ([Id]),
+    CONSTRAINT FK_lessons_userID FOREIGN KEY (CreatorId) REFERENCES [dbo].[User] (Id), --foreign key grabbed from user
+    CONSTRAINT FK_lessons_modID FOREIGN KEY (ModuleId) REFERENCES [dbo].[Module] (Id), --foreign key grabbed from imageassets
+    CONSTRAINT FK_lessons_iconid FOREIGN KEY (IconId) REFERENCES [dbo].[ImageAsset] (Id) --foreign key grabbed from readinessgroupid
+
+);
+
+CREATE TABLE [dbo].[LessonModesInfo]
+(
+    [Id] uniqueidentifier DEFAULT newid() NOT NULL,
+    [LessonId] uniqueidentifier DEFAULT newid() NOT NULL,
+    [LessonTitle] [NVARCHAR] (255) NOT NULL,
+    [LessonSummary] [NVARCHAR] (255) NOT NULL,
+    [SkillsCovered] [NVARCHAR] (255) NOT NULL,
+    [Mode] varchar(10) NOT NULL CHECK (Mode IN('KnowledgeCheck', 'WalkThrough', 'PracticesRun', 'Video')),
+    [EstimatedTimeDuration] INT,
+    [VideoDuration] float(53),
+    [VideoName] [NVARCHAR] (255) NOT NULL,
+    [IconName] [NVARCHAR] (255) NOT NULL,
+    [IconId]  uniqueidentifier DEFAULT newid(),
+    [CreatedDate] DATETIME2 NOT NULL,
+    [UpdatedDate] DATETIME2 NOT NULL,
+    PRIMARY KEY ([Id]), 
+    CONSTRAINT FK_lessonmodeinfo_lessondID FOREIGN KEY (LessonId) REFERENCES [dbo].[Lesson] (Id), --foreign key grabbed from imageassets
+    CONSTRAINT FK_lessonsmodesinfo_iconid FOREIGN KEY (IconId) REFERENCES [dbo].[ImageAsset] (Id) --foreign key grabbed from readinessgroupid
+);
+
+CREATE TABLE [dbo].[LessonModesInfoTranslation]
+(
+    [LessonModesInfoId] uniqueidentifier DEFAULT newid() NOT NULL,
+    [LanguageId] uniqueidentifier DEFAULT newid() NOT NULL,
+    [LessonTitle] [NVARCHAR] (255) NOT NULL,
+    [LessonSummary] [NVARCHAR] (255) NOT NULL,
+    [SkillsCovered] [NVARCHAR] (50) NOT NULL,
+    [IconName] [NVARCHAR] (50) NOT NULL,
+    [VideoName] [NVARCHAR] (50) NOT NULL,
+    [IconId] uniqueidentifier DEFAULT newid(),
+    [VideoDuration] float(53),
+    PRIMARY KEY ([LessonModesInfoId]),
+    CONSTRAINT FK_lessonsmodetransl_iconid FOREIGN KEY (IconId) REFERENCES [dbo].[ImageAsset] (Id), --foreign key grabbed from readinessgroupid
+    CONSTRAINT FK_lessonsmodetransl_langid FOREIGN KEY (LanguageId) REFERENCES [dbo].[Language] (Id), --foreign key grabbed from readinessgroupid
+    CONSTRAINT FK_lessonsmodetransl_lmodeid FOREIGN KEY (LessonModesInfoId) REFERENCES [dbo].[LessonModesInfo] (Id) --foreign key grabbed from readinessgroupid
+);
+
+CREATE TABLE [dbo].[TrainingCampaignLesson]
+(
+    [TrainingCampaignId] uniqueidentifier DEFAULT newid() NOT NULL,
+    [LessonId] uniqueidentifier DEFAULT newid() NOT NULL,
+    [KnowledgeCheckEnabled] BIT NOT NULL,
+    [WalkthroughEnabled] BIT NOT NULL,
+    [PracticeEnabled] BIT NOT NULL,
+    [Order] [NVARCHAR] (50) NOT NULL,
+    [CreatedDate] DATETIME2 NOT NULL,
+    [UpdateDate]DATETIME2 NOT NULL,
+    [VideoEnabled] BIT NOT NULL,
+    PRIMARY KEY ([TrainingCampaignId],[LessonId]),
+    CONSTRAINT FK_tcamlessons_TrainingcampID FOREIGN KEY (TrainingCampaignId) REFERENCES [dbo].[TrainingCampaign] (Id), --foreign key grabbed from trainingcamp
+    CONSTRAINT FK_tcamlessons_lessondID FOREIGN KEY (LessonId) REFERENCES [dbo].[Lesson] (Id) --foreign key grabbed from imageassets
+
+);
+
+CREATE TABLE [dbo].[LessonTranslation]
+(
+    [LanguageId] uniqueidentifier DEFAULT newid() NOT NULL,
+    [LessonId] uniqueidentifier DEFAULT newid() NOT NULL,
+    [Name] [NVARCHAR] (255) NOT NULL,
+    [Description] [NVARCHAR] (255) NOT NULL,
+    [ImageName] [NVARCHAR] (50) NOT NULL,
+    [IconId] uniqueidentifier DEFAULT newid(),
+    PRIMARY KEY ([LanguageId],[LessonId]),
+    CONSTRAINT FK_lesstrans_langID FOREIGN KEY (LanguageId) REFERENCES [dbo].[Language] (Id), --foreign key grabbed from trainingcamp
+    CONSTRAINT FK_lesstrans_lessondID FOREIGN KEY (LessonId) REFERENCES [dbo].[Lesson] (Id), --foreign key grabbed from imageassets
+    CONSTRAINT FK_lesstrans_iconid FOREIGN KEY (IconId) REFERENCES [dbo].[ImageAsset] (Id) --foreign key grabbed from readinessgroupid
+
+);
+
+CREATE TABLE [dbo].[Reminder]
+(
+    [Id] uniqueidentifier DEFAULT newid() NOT NULL,
+    [SenderId] uniqueidentifier DEFAULT newid() NOT NULL,
+    [TrainingCampaignId] uniqueidentifier DEFAULT newid() NOT NULL,
+    [SentDate] DATETIME2 NOT NULL,
+    [Type] varchar(10) NOT NULL CHECK (Type IN('InactiveLearners', 'OffPaceLearners', 'BrickWallLessons', 'LowPassRateLearners', 'HighFailRateKnowledgeCheckLessons', 'IncorrectPracticeActionsLessons', 'FastForwardedVideoLessons', 'WalkthroughSpeedThroughLessons', 'AllLearners', 'MostActiveLearners')),
+    PRIMARY KEY ([Id]),
+    CONSTRAINT FK_reminders_senderid FOREIGN KEY (SenderId) REFERENCES [dbo].[User] (Id), --foreign key grabbed from user
+    CONSTRAINT FK_reminders_TrainingcampID FOREIGN KEY (TrainingCampaignId) REFERENCES [dbo].[TrainingCampaign] (Id) --foreign key grabbed from trainingcamp
+
+);
+
+CREATE TABLE [dbo].[ReminderRecipient]
+(
+    [ReminderId] uniqueidentifier DEFAULT newid() NOT NULL,
+    [RecipientId] uniqueidentifier DEFAULT newid() NOT NULL,
+    PRIMARY KEY ([ReminderId], [RecipientId]),
+    CONSTRAINT FK_remindersrec_recid FOREIGN KEY (RecipientId) REFERENCES [dbo].[User] (Id), --foreign key grabbed from user
+    CONSTRAINT FK_remindersrec_remid FOREIGN KEY (ReminderId) REFERENCES [dbo].[Reminder] (Id), --foreign key grabbed from user
+
+);
+
+CREATE TABLE [dbo].[ReminderLesson]
+(
+    [ReminderId] uniqueidentifier DEFAULT newid() NOT NULL,
+    [LessonId] uniqueidentifier DEFAULT newid() NOT NULL,
+    PRIMARY KEY ([ReminderId], [LessonId]),
+    CONSTRAINT FK_reminderlessrec_lessid FOREIGN KEY (LessonId) REFERENCES [dbo].[Lesson] (Id), --foreign key grabbed from user
+    CONSTRAINT FK_reminderlessrec_remid FOREIGN KEY (ReminderId) REFERENCES [dbo].[Reminder] (Id) --foreign key grabbed from user
+
+);
+
+CREATE TABLE [dbo].[CalculatedLessonAverageStatistics]
+(
+    [LessonId] uniqueidentifier DEFAULT newid() NOT NULL,
+    [UserId] uniqueidentifier DEFAULT newid() NOT NULL,
+    [TrainingCampaignId] uniqueidentifier DEFAULT newid() NOT NULL,
+    [AverageTime] float(53) NOT NULL,
+    [AverageTimeDifference] float(53) NOT NULL,
+    [AverageTimeRate] float(53) NOT NULL,
+    PRIMARY KEY ([LessonId], [UserId], [TrainingCampaignId]),
+    CONSTRAINT FK_calclessonstat_LessonID FOREIGN KEY (LessonId) REFERENCES [dbo].[Lesson] (Id), --foreign key grabbed from train
+    CONSTRAINT FK_calclessonstat_userID FOREIGN KEY (UserId) REFERENCES [dbo].[User] (Id), --foreign key grabbed from user
+    CONSTRAINT FK_calclessonstat_TrainingcampID FOREIGN KEY (TrainingCampaignId) REFERENCES [dbo].[TrainingCampaign] (Id) --foreign key grabbed from trainingcamp
+
+);
+
+CREATE TABLE [dbo].[LessonStatistic]
+(
+    [Id] uniqueidentifier DEFAULT newid() NOT NULL,
+    [LessonId] uniqueidentifier DEFAULT newid() NOT NULL,
+    [Mode] varchar(10) NOT NULL CHECK (Mode IN('KnowledgeCheck', 'WalkThrough', 'PracticesRun', 'Video')),
+    [Type] varchar(10) NOT NULL CHECK (Type IN('Start', 'End')),
+    [CreatedDate] DATETIME2 NOT NULL,
+    [UserId] uniqueidentifier DEFAULT newid() NOT NULL,
+    [SessionId] uniqueidentifier DEFAULT newid() NOT NULL,
+    [TrainingCampaignId] uniqueidentifier DEFAULT newid() NOT NULL,
+    [LocationId] uniqueidentifier DEFAULT newid() NOT NULL,
+    [ReadinessGroupId] uniqueidentifier DEFAULT newid() NOT NULL,
+    [Market] [NVARCHAR] (50) NOT NULL,
+    [Region] [NVARCHAR] (50) NOT NULL,
+    [Warehouse]  [NVARCHAR] (50) NOT NULL,
+    [CompletenessStatus] varchar(10) CHECK (CompletenessStatus IN('NotCompleted', 'Completed')),
+    [LanguageId]  uniqueidentifier DEFAULT newid(),
+    PRIMARY KEY ([LessonId], [UserId], [TrainingCampaignId]),
+    CONSTRAINT FK_lessonstat_LessonID FOREIGN KEY (LessonId) REFERENCES [dbo].[Lesson] (Id), --foreign key grabbed from train
+    CONSTRAINT FK_lessonstat_userID FOREIGN KEY (UserId) REFERENCES [dbo].[User] (Id), --foreign key grabbed from user
+    CONSTRAINT FK_lessonstat_TrainingcampID FOREIGN KEY (TrainingCampaignId) REFERENCES [dbo].[TrainingCampaign] (Id), --foreign key grabbed from trainingcamp
+    CONSTRAINT FK_lessonstat_sessionID FOREIGN KEY (SessionId) REFERENCES [dbo].[Session] (Id), --foreign key grabbed from sessions
+    CONSTRAINT FK_lessonstat_langID FOREIGN KEY (LanguageId) REFERENCES [dbo].[Language] (Id), --foreign key grabbed from trainingcamp
+    CONSTRAINT FK_lessonstat_locID FOREIGN KEY (LocationId) REFERENCES [dbo].[Location] (Id), --foreign key grabbed from trainingcamp
+
+);
+
+CREATE TABLE [dbo].[Screen]
+(
+    [Id] uniqueidentifier DEFAULT newid() NOT NULL,
+    [Name] [NVARCHAR] (255) NOT NULL,
+    [TrainingProgramId] uniqueidentifier DEFAULT newid() NOT NULL,
+    [DisplayId] [NVARCHAR] (255) NOT NULL,
+    [CreatedDate] DATETIME2 NOT NULL,
+    [Status] varchar(10) NOT NULL CHECK (Status IN('Active', 'Archived')),
+    [BundleName] [NVARCHAR] (50) NOT NULL,
+    [ScreenshotName] [NVARCHAR] (50) NOT NULL,
+    [UpdatedDate] DATETIME2 NOT NULL,
+    [BundleSize] BIGINT,
+    PRIMARY KEY ([Id]),
+    CONSTRAINT FK_screens_trainid FOREIGN KEY (TrainingProgramId) REFERENCES [dbo].[TrainingProgram] (Id) --foreign key grabbed from readinessgroupid
+
+);
+
+CREATE TABLE [dbo].[BundleCustomLocalization]
+(
+    [Id] uniqueidentifier DEFAULT newid() NOT NULL,
+    [Key] [NVARCHAR] (255) NOT NULL,
+    [Value] [NVARCHAR] (50) NOT NULL,
+    [ScreenId] uniqueidentifier DEFAULT newid() NOT NULL,
+    [LanguageId] uniqueidentifier DEFAULT newid() NOT NULL,
+    PRIMARY KEY ([Id]),
+    CONSTRAINT FK_bundlelocal_langid FOREIGN KEY (LanguageId) REFERENCES [dbo].[Language] (Id), --foreign key grabbed from readinessgroupid
+    CONSTRAINT FK_bundlelocal_screenid FOREIGN KEY (ScreenId) REFERENCES [dbo].[Screen] (Id) --foreign key grabbed from readinessgroupid
+
+);
+
+CREATE TABLE [dbo].[ScreenLanguagesBundles]
+(
+    [ScreenId] uniqueidentifier DEFAULT newid() NOT NULL,
+    [LanguageId] uniqueidentifier DEFAULT newid() NOT NULL,
+    [BundleName] [NVARCHAR] (50) NOT NULL,
+    PRIMARY KEY ([ScreenId], [LanguageId]),
+    CONSTRAINT FK_screenlangbun_langid FOREIGN KEY (LanguageId) REFERENCES [dbo].[Language] (Id), --foreign key grabbed from readinessgroupid
+    CONSTRAINT FK_screenlangbun_screenid FOREIGN KEY (ScreenId) REFERENCES [dbo].[Screen] (Id) --foreign key grabbed from readinessgroupid
+
+);
+
+CREATE TABLE [dbo].[ControlType]
+(
+    [Id] uniqueidentifier DEFAULT newid() NOT NULL,
+    [Name] [NVARCHAR] (255) NOT NULL,
+    PRIMARY KEY ([Id])
+);
+
+CREATE TABLE [dbo].[Control]
+(
+    [Id] uniqueidentifier DEFAULT newid() NOT NULL,
+    [ExternalId] [NVARCHAR] (50) NOT NULL,
+    [ScreenId] uniqueidentifier DEFAULT newid() NOT NULL,
+    [StepId] uniqueidentifier DEFAULT newid() NOT NULL,
+    [ControlTypeId] uniqueidentifier DEFAULT newid() NOT NULL,
+    [ExternalFrameId] [NVARCHAR] (50) NOT NULL,
+    PRIMARY KEY ([Id]),
+    CONSTRAINT FK_controls_screenid FOREIGN KEY (ScreenId) REFERENCES [dbo].[Screen] (Id), --foreign key grabbed from readinessgroupid
+    CONSTRAINT FK_controls_controlid FOREIGN KEY (ControlTypeId) REFERENCES [dbo].[ControlType] (Id) --foreign key grabbed from readinessgroupid
+);
+
+CREATE TABLE [dbo].[ControlValue]
+(
+    [Id] uniqueidentifier DEFAULT newid() NOT NULL,
+    [ControlId] uniqueidentifier DEFAULT newid() NOT NULL,
+    [Value] [NVARCHAR] (50) NOT NULL,
+    PRIMARY KEY ([Id]),
+    CONSTRAINT FK_controlval_controlid FOREIGN KEY (ControlId) REFERENCES [dbo].[Control] (Id), --foreign key grabbed from readinessgroupid
+
+);
+
+CREATE TABLE [dbo].[Annotation]
+(
+    [Id] uniqueidentifier DEFAULT newid() NOT NULL,
+    [Name] [NVARCHAR] (255) NOT NULL,
+    [ScreenId] uniqueidentifier DEFAULT newid() NOT NULL,
+    [ControlTypeId] uniqueidentifier DEFAULT newid() NOT NULL,
+    [CreatedAt] DATETIME2 NOT NULL,
+    [Status] INT NOT NULL,
+    [UpdatedAt] DATETIME2,
+    [Height] float(53) NOT NULL,
+    [Width] float(53) NOT NULL,
+    [X] float(53) NOT NULL,
+    [Y] float(53) NOT NULL,
+    PRIMARY KEY ([Id]),
+    CONSTRAINT FK_annotations_controltypeid FOREIGN KEY (ControlTypeId) REFERENCES [dbo].[ControlType] (Id), --foreign key grabbed from readinessgroupid
+    CONSTRAINT FK_annotations_screenid FOREIGN KEY (ScreenId) REFERENCES [dbo].[Screen] (Id), --foreign key grabbed from readinessgroupid
+
+);
+
+CREATE TABLE [dbo].[Step]
+(
+    [Id] uniqueidentifier DEFAULT newid() NOT NULL,
+    [ScreenId] uniqueidentifier DEFAULT newid(),
+    [LessonId] uniqueidentifier DEFAULT newid() NOT NULL,
+    [Name] [NVARCHAR] (255) NOT NULL,
+    [Description] [NVARCHAR] (50) NOT NULL,
+    [Status]  varchar(10) NOT NULL CHECK (Status IN('Active', 'Archived')),
+    [Order] INT NOT NULL,
+    [CreatedDate] DATETIME2 NOT NULL,
+    [ControlId] uniqueidentifier DEFAULT newid(),
+    [UpdateDate] DATETIME2 NOT NULL,
+    [ApprovedById] uniqueidentifier DEFAULT newid(),
+    PRIMARY KEY ([Id]),
+    CONSTRAINT FK_steps_screenid FOREIGN KEY (ScreenId) REFERENCES [dbo].[Screen] (Id), --foreign key grabbed from readinessgroupid
+    CONSTRAINT FK_steps_lessonid FOREIGN KEY (LessonId) REFERENCES [dbo].[Lesson] (Id), --foreign key grabbed from readinessgroupid
+
+);
+
+CREATE TABLE [dbo].[StepTranslation]
+(
+    [StepId] uniqueidentifier DEFAULT newid() NOT NULL,
+    [LanguageId] uniqueidentifier DEFAULT newid() NOT NULL,
+    [Name] [NVARCHAR] (255) NOT NULL,
+    [Description] [NVARCHAR] (50) NOT NULL,
+    PRIMARY KEY ([StepId], [LanguageId]), 
+    CONSTRAINT FK_steptrans_langid FOREIGN KEY (LanguageId) REFERENCES [dbo].[Language] (Id), --foreign key grabbed from readinessgroupid
+    CONSTRAINT FK_steptrans_stepid FOREIGN KEY (StepId) REFERENCES [dbo].[Step] (Id) --foreign key grabbed from readinessgroupid
+);
+
+CREATE TABLE [dbo].[StepMode]
+(
+    [StepId] uniqueidentifier DEFAULT newid() NOT NULL,
+    [Mode] varchar(10) NOT NULL CHECK (Mode IN('KnowledgeCheck', 'WalkThrough', 'PracticesRun', 'Video')),
+    [IsSkipped] BIT,
+    [IsNoAction] BIT,
+    [ShownTime] INT NOT NULL, 
+    [ExpectedValue] [NVARCHAR] (50) NOT NULL,
+    [ControlId] uniqueidentifier DEFAULT newid(),
+    [ControlRule] [NVARCHAR] (50) NOT NULL,
+    [WalkThroughPromptPosition]  varchar(10) CHECK (WalkThroughPromptPosition IN('auto', 'top', 'top_start', 'top_end', 'bottom', 'bottom_start', 'bottom_end', 'left', 'left_start', 'left_end', 'right', 'right_start', 'right_end')),
+    [CreatedDate] DATETIME2 NOT NULL,
+    [UpdatedDate] DATETIME2 NOT NULL,
+    [VoiceInflection] [NVARCHAR] (50) NOT NULL,
+    [VoiceLanguage] [NVARCHAR] (50) NOT NULL,
+    [VoicePhonetic] [NVARCHAR] (50) NOT NULL,
+    [VoiceScript] [NVARCHAR] (50) NOT NULL,
+    [VoiceInstructions] [NVARCHAR] (50) NOT NULL,
+    PRIMARY KEY ([StepId]), --mode inside too
+    CONSTRAINT FK_stepmodes_stepid FOREIGN KEY (StepId) REFERENCES [dbo].[Step] (Id) --foreign key grabbed from readinessgroupid
+
+);
+
+CREATE TABLE [dbo].[StepStatistic]
+(
+    [Id] uniqueidentifier DEFAULT newid() NOT NULL,
+    [SessionId] uniqueidentifier DEFAULT newid() NOT NULL,
+    [UserId] uniqueidentifier DEFAULT newid() NOT NULL,
+    [StepId] uniqueidentifier DEFAULT newid() NOT NULL,
+    [Status] varchar(10) NOT NULL CHECK (Status IN('Passed', 'Failed')),
+    [Mode] varchar(10) NOT NULL CHECK (Mode IN('KnowledgeCheck', 'WalkThrough','PracticesRun', 'Video')),
+    [CreatedDate] DATETIME2 NOT NULL,
+    [LessonId] uniqueidentifier DEFAULT newid() NOT NULL,
+    [ReadinessGroupId] uniqueidentifier DEFAULT newid() NOT NULL,
+    [TrainingCampaignId] uniqueidentifier DEFAULT newid() NOT NULL,
+    [ControlId] [NVARCHAR] (50) NOT NULL,
+    [EventDate] DATETIME2 NOT NULL,
+    [PositionX] INT,
+    [PositionY] INT,
+    [TrainingProgramId] uniqueidentifier DEFAULT newid() NOT NULL,
+    [LanguageId] uniqueidentifier DEFAULT newid(),
+    PRIMARY KEY ([Id]),
+    CONSTRAINT FK_stepstat_LessonID FOREIGN KEY (LessonId) REFERENCES [dbo].[Lesson] (Id), --foreign key grabbed from train
+    CONSTRAINT FK_stepstat_userID FOREIGN KEY (UserId) REFERENCES [dbo].[User] (Id), --foreign key grabbed from user
+    CONSTRAINT FK_stepstat_TrainingcampID FOREIGN KEY (TrainingCampaignId) REFERENCES [dbo].[TrainingCampaign] (Id), --foreign key grabbed from trainingcamp
+    CONSTRAINT FK_stepstat_sessionID FOREIGN KEY (SessionId) REFERENCES [dbo].[Session] (Id), --foreign key grabbed from sessions
+    CONSTRAINT FK_stepstat_langID FOREIGN KEY (LanguageId) REFERENCES [dbo].[Language] (Id), --foreign key grabbed from trainingcamp
+    CONSTRAINT FK_stepstat_stepID FOREIGN KEY (StepId) REFERENCES [dbo].[Step] (Id), --foreign key grabbed from trainingcamp
+    CONSTRAINT FK_stepstat_trainproID FOREIGN KEY (TrainingProgramId) REFERENCES [dbo].[TrainingProgram] (Id), --foreign key grabbed from trainingcamp
+    CONSTRAINT FK_stepstat_readinessID FOREIGN KEY (ReadinessGroupId) REFERENCES [dbo].[ReadinessGroup] (Id) --foreign key grabbed from trainingcamp
+
+);
+
+CREATE TABLE [dbo].[VideoStatistic]
+(
+    [Id] uniqueidentifier DEFAULT newid() NOT NULL,
+    [UserId] uniqueidentifier DEFAULT newid() NOT NULL, --fkey
+    [LessonId] uniqueidentifier DEFAULT newid() NOT NULL, --fkey
+    [VideoName] [NVARCHAR] (50) NOT NULL,
+    [ReadinessGroupId] uniqueidentifier DEFAULT newid() NOT NULL,
+    [TrainingCampaignId] uniqueidentifier DEFAULT newid() NOT NULL,
+    [LocationId] uniqueidentifier DEFAULT newid() NOT NULL,
+    [Market] [NVARCHAR] (50) NOT NULL,
+    [Region] [NVARCHAR] (50) NOT NULL,
+    [Warehouse]  [NVARCHAR] (50) NOT NULL,
+    [CreatedDate] DATETIME2 NOT NULL,
+    [InternetConnectionType] [NVARCHAR] (50) NOT NULL,
+    [InternetEffectiveType] [NVARCHAR] (50) NOT NULL,
+    [VideoBufferingDuration] float(53),
+    [Latitude] float(53),
+    [Longitude] float(53),
+    [CompletenessStatus]varchar(10) NOT NULL CHECK (CompletenessStatus IN('NotCompleted', 'Completed')),
+    [SessionId] uniqueidentifier DEFAULT newid() NOT NULL, --fkey
+    [SkippedVideoDuration] float(53),
+    [ActualTimeDuration] float(53),
+    [LanguageId]  uniqueidentifier DEFAULT newid(), --fkey
+    PRIMARY KEY ([Id]),
+    CONSTRAINT FK_videostat_LessonID FOREIGN KEY (LessonId) REFERENCES [dbo].[Lesson] (Id), --foreign key grabbed from train
+    CONSTRAINT FK_videostat_userID FOREIGN KEY (UserId) REFERENCES [dbo].[User] (Id), --foreign key grabbed from user
+    CONSTRAINT FK_videostat_TrainingcampID FOREIGN KEY (TrainingCampaignId) REFERENCES [dbo].[TrainingCampaign] (Id), --foreign key grabbed from trainingcamp
+    CONSTRAINT FK_videostat_sessionID FOREIGN KEY (SessionId) REFERENCES [dbo].[Session] (Id), --foreign key grabbed from sessions
+    CONSTRAINT FK_videostat_langID FOREIGN KEY (LanguageId) REFERENCES [dbo].[Language] (Id), --foreign key grabbed from trainingcamp
+    CONSTRAINT FK_videostat_locID FOREIGN KEY (LocationId) REFERENCES [dbo].[Location] (Id), --foreign key grabbed from trainingcamp
+
+);
+
+CREATE TABLE [dbo].[CalculatedUsersStatistic]
+(
+    [UserId] uniqueidentifier DEFAULT newid(),
+    [Name] [NVARCHAR](50) NOT NULL,
+    [Role] [NVARCHAR](50) NOT NULL,
+    [JobRoleId] uniqueidentifier DEFAULT newid(),
+    [LessonsRemaining] INT,
+    [AssignedModule] INT,
+    [AssignedLesson] INT,
+    [CompletedLesson] INT,
+    [CompletedModule] INT,
+    [KnowledgeCheckAttempts ] INT,
+    [Readiness] float(53),
+    [AvgLessonTime] INT,
+    [EstimatedLessonTimeRemaining] INT,
+    [CompletionDate] DATETIME2,
+    [LessonCompletion] float(53),
+    [CreatedDate] DATETIME2,
+    [TrainingCampaignId] uniqueidentifier DEFAULT newid(),
+    [NumberOfSession] INT,
+    [ViewedModule] INT,
+    [ViewedExercise] INT,
+    [ViewedWalkthrough] INT,
+    [ViewedPractice] INT,
+    [ViewedKnowledgeCheck] INT,
+    [ViewedVideo] INT,
+    [UniqueLessonView] INT,
+    [TimeSpent] float(53)
+);
+
+
+CREATE TABLE [dbo].[ImportProcess]
+(
+    [Id] uniqueidentifier DEFAULT newid(),
+    [Status] varchar(10) NOT NULL CHECK (Status IN('InProcess', 'Success', 'Failed')), 
+    [CompletenessPercentage] INT NOT NULL,
+    [StartedAt] DATETIME2 NOT NULL,
+    [EndedAt] DATETIME2,
+    PRIMARY KEY ([Id])
+);
+
+
+CREATE TABLE [dbo].[ReportItem]
+(
+    [Id] uniqueidentifier DEFAULT newid(),
+    [ImportProcessId] uniqueidentifier DEFAULT newid(),
+    [RowNumber] INT NOT NULL,
+    [CreatedAt] DATETIME2 NOT NULL,
+    [UserExternalId] BIGINT NOT NULL,
+    [Message] [NVARCHAR](50) NOT NULL,
+    [Email] [NVARCHAR](50) NOT NULL,
+    PRIMARY KEY ([Id]), 
+    CONSTRAINT FK_reportitems_importid FOREIGN KEY (ImportProcessId) REFERENCES [dbo].[ImportProcess] (Id) --foreign key grabbed from readinessgroupid
+
+
+);
+
+CREATE TABLE [dbo].[AggregationStatisticsItem]
+(
+    [Name] [NVARCHAR](50) NOT NULL,
+    [Value] [NVARCHAR](50) NOT NULL
+);
+
+CREATE TABLE [dbo].[EmployeeDetails]
+(
+    [UserId] uniqueidentifier DEFAULT newid() NOT NULL,
+    [Name] [NVARCHAR](50) NOT NULL,
+    [Role] [NVARCHAR](50) NOT NULL,
+    [AvgLessonTime] float(53) NOT NULL,
+    [Readiness] float NOT NULL,
+    [KnowledgeCheckAttempt] INT NOT NULL,
+    [LessonsCompletion] float NOT NULL,
+    [CompletionDate] DATETIME2,
+    [EstimatedLessonTimeRemaining] INT NOT NULL,
+    [AssignedModule] INT NOT NULL,
+    [CompletedModule] INT NOT NULL,
+    [AssignedLesson] INT NOT NULL,
+    [CompletedLesson] INT NOT NULL,
+    [LessonsRemaining] INT NOT NULL,
+    PRIMARY KEY ([UserId]),
+    CONSTRAINT FK_employeedetails_usersid FOREIGN KEY (UserId) REFERENCES [dbo].[User] (Id) --foreign key grabbed from readinessgroupid
+);
+
+GO
